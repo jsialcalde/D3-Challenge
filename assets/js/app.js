@@ -3,12 +3,12 @@ function makeResponsive() {
 
     // if the SVG area isn't empty when the browser loads,
     // remove it and replace it with a resized version of the chart
-    var svgArea = d3.select("body").select("#scatter");
+    var svgArea = d3.select("body").select("svg");
   
-    // // clear svg is not empty
-    // if (!svgArea.empty()) {
-    //   svgArea.remove();
-    // }
+    // clear svg is not empty
+    if (!svgArea.empty()) {
+      svgArea.remove();
+    }
   
     // SVG wrapper dimensions are determined by the current width and
     // height of the browser window.
@@ -58,12 +58,15 @@ function makeResponsive() {
                   data.smokes = +data.smokes;
                   data.smokesLow = +data.smokesLow;
                   data.smokesHigh = +data.smokesHigh;
+                  // console.log(data.state);
+                  // console.log(data.healthcare);
+                  // console.log(data.poverty);
         });
 
         
         // create scales
-        var xLinearScale = d3.scaleTime()
-          .domain(d3.extent(healthData, d => d.povertyMoe))
+        var xLinearScale = d3.scaleLinear()
+          .domain(d3.extent(healthData, d => d.poverty))
           .range([0, width]);
   
         var yLinearScale = d3.scaleLinear()
@@ -72,61 +75,76 @@ function makeResponsive() {
   
         // create axes
         var xAxis = d3.axisBottom(xLinearScale);
-        var yAxis = d3.axisLeft(yLinearScale).ticks(6);
+        var yAxis = d3.axisLeft(yLinearScale);
   
-        // // append axes
-        // chartGroup.append("g")
-        //   .attr("transform", `translate(0, ${height})`)
-        //   .call(xAxis);
+        // append axes
+        chartGroup.append("g")
+          .attr("transform", `translate(0, ${height})`)
+          .call(xAxis);
   
-        // chartGroup.append("g")
-        //   .call(yAxis);
+        chartGroup.append("g")
+          .call(yAxis);
   
-        // // line generator
-        // var line = d3.line()
-        //   .x(d => xScale(d.date))
-        //   .y(d => yScale(d.medals));
+
+        // append circles
+        var circlesGroup = chartGroup.selectAll("circle")
+          .data(healthData)
+          .enter()
+          .append("circle")
+          .attr("cx", d => xLinearScale(d.poverty))
+          .attr("cy", d => yLinearScale(d.healthcare))
+          .attr("r", "10")
+          .attr("fill", "lightblue")
+          .attr("stroke-width", "1")
+          .attr("stroke", "black")
+         
+
+          const textElems = circlesGroup
+          .data(healthData)
+          .append('text',d => (d.abbr))
+          .selectAll('text')
+          .enter().attr("text",d => (d.abbr))
+          .attr('font-size',8)//font size
+          .attr('dx', -10)//positions text towards the left of the center of the circle
+          .attr('dy',4)
+
+            // Create axes labels
+          chartGroup.append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 0 - margin.left)
+          .attr("x", 0 - (height / 2))
+          .attr("dy", "1em")
+          .attr("class", "axisText")
+          .text("Lacks Healthcare (%)");
+
+           chartGroup.append("text")
+          .attr("transform", `translate(${width / 2}, ${height + margin.top})`)
+          .attr("class", "axisText")
+          .text("in Poverty (%)");
   
-        // // append line
-        // chartGroup.append("path")
-        //   .data([healthData])
-        //   .attr("d", line)
-        //   .attr("fill", "none")
-        //   .attr("stroke", "red");
   
-        // // append circles
-        // var circlesGroup = chartGroup.selectAll("circle")
-        //   .data(healthData)
-        //   .enter()
-        //   .append("circle")
-        //   .attr("cx", d => xTimeScale(d.date))
-        //   .attr("cy", d => yLinearScale(d.medals))
-        //   .attr("r", "10")
-        //   .attr("fill", "gold")
-        //   .attr("stroke-width", "1")
-        //   .attr("stroke", "black");
+        // Step 1: Initialize Tooltip
+        var toolTip = d3.tip()
+          .attr("class", "tooltip")
+          .offset([80, -60])
+          .html(function(d) {
+            return (`
+            <h6>${(d.state)}</h6>
+            Poverty: ${(d.poverty)} <hr>
+            Healthcare: ${d.healthcare}`);
+          });
   
+        // Step 2: Create the tooltip in chartGroup.
+        chartGroup.call(toolTip);
   
-        // // Step 1: Initialize Tooltip
-        // var toolTip = d3.tip()
-        //   .attr("class", "tooltip")
-        //   .offset([80, -60])
-        //   .html(function(d) {
-        //     return (`<strong>${dateFormatter(d.date)}<strong><hr>${d.medals}
-        //     medal(s) won`);
-        //   });
-  
-        // // Step 2: Create the tooltip in chartGroup.
-        // chartGroup.call(toolTip);
-  
-        // // Step 3: Create "mouseover" event listener to display tooltip
-        // circlesGroup.on("mouseover", function(d) {
-        //   toolTip.show(d, this);
-        // })
-        // // Step 4: Create "mouseout" event listener to hide tooltip
-        //   .on("mouseout", function(d) {
-        //     toolTip.hide(d);
-        //   });
+        // Step 3: Create "mouseover" event listener to display tooltip
+        circlesGroup.on("mouseover", function(d) {
+          toolTip.show(d, this);
+        })
+        // Step 4: Create "mouseout" event listener to hide tooltip
+          .on("mouseout", function(d) {
+            toolTip.hide(d);
+          });
       });
   }
   
@@ -135,31 +153,5 @@ function makeResponsive() {
   
   // When the browser window is resized, makeResponsive() is called.
   d3.select(window).on("resize", makeResponsive);
-  
-  
-//   // Create the rectangles using data binding
-//   var barsGroup = chartGroup.selectAll("rect")
-//       .data(dataArray)
-//       .enter()
-//       .append("rect")
-//       .attr("x", (d, i) => xScale(dataCategories[i]))
-//       .attr("y", d => yScale(d))
-//       .attr("width", xScale.bandwidth())
-//       .attr("height", d => chartHeight - yScale(d))
-//       .attr("fill", "green");
-  
-//   // Create the event listeners with transitions
-//   barsGroup.on("mouseover", function() {
-//     d3.select(this)
-//               .transition()
-//               .duration(500)
-//               .attr("fill", "red");
-//   })
-//       .on("mouseout", function() {
-//         d3.select(this)
-//               .transition()
-//               .duration(500)
-//               .attr("fill", "green");
-//       });
   
   
