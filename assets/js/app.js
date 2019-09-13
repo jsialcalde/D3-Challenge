@@ -19,7 +19,7 @@ function makeResponsive() {
       top: 50,
       bottom: 50,
       right: 50,
-      left: 50
+      left: 25
     };
   
     var height = svgHeight - margin.top - margin.bottom;
@@ -58,9 +58,7 @@ function makeResponsive() {
                   data.smokes = +data.smokes;
                   data.smokesLow = +data.smokesLow;
                   data.smokesHigh = +data.smokesHigh;
-                  // console.log(data.state);
-                  // console.log(data.healthcare);
-                  // console.log(data.poverty);
+               
         });
 
         
@@ -93,20 +91,31 @@ function makeResponsive() {
           .append("circle")
           .attr("cx", d => xLinearScale(d.poverty))
           .attr("cy", d => yLinearScale(d.healthcare))
-          .attr("r", "10")
+          .attr("r", "15")
           .attr("fill", "lightblue")
           .attr("stroke-width", "1")
           .attr("stroke", "black")
+          
          
+          
+        
+          //Add the SVG Text Element to the svgContainer
+          var text = chartGroup
+                          .selectAll("scatter")
+                          .data(healthData)
+                          .enter()
+                          .append("text");
+          
+          //Add SVG Text Element Attributes
+          var textLabels = text
+                           .attr("x", function(d) {return xLinearScale(d.poverty)-10; })
+                           .attr("y", function(d) {return yLinearScale(d.healthcare)+5; })
+                           .text( function (d) { return d.abbr})
+                          //  .attr("font-family", "sans-serif")
+                          //  .attr("font-size", "12px")
+                           .attr("fill", "white");          
+   
 
-          const textElems = circlesGroup
-          .data(healthData)
-          .append('text',d => (d.abbr))
-          .selectAll('text')
-          .enter().attr("text",d => (d.abbr))
-          .attr('font-size',8)//font size
-          .attr('dx', -10)//positions text towards the left of the center of the circle
-          .attr('dy',4)
 
             // Create axes labels
           chartGroup.append("text")
